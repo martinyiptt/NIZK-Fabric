@@ -27,18 +27,15 @@ import (
     "crypto/sha256"
     "encoding/binary"
     "time"
-
     
     "github.com/zkLedger_cc/go/zksigma/btcec"
     "github.com/zkLedger_cc/go/zksigma"
-
 
     "github.com/hyperledger/fabric/core/chaincode/shim"
     pb "github.com/hyperledger/fabric/protos/peer"
 )
 
 var logger = shim.NewLogger("zk_cc0")
-
 
 const (
     Transfer TXN_TYPE = iota
@@ -76,7 +73,6 @@ type Entry struct {
     SKProof         *zksigma.GSPFSProof       // Proof of knowledge of SK for issuance (issuer) or withdrawal (Bank)
 }
 
-
 type EncryptedTransaction struct {
     Index      int ``
     TS         time.Time
@@ -100,17 +96,11 @@ type PKI struct {
 }
 
 var ZKLedgerCurve zksigma.ZKPCurveParams
-
 var Id int
 var Num = 4
 var pki PKI 
-
-
-
 var etxJson string
 var err error
-
-
 
 var CommsCache []zksigma.ECPoint    
 var RTokenCache []zksigma.ECPoint
@@ -122,8 +112,6 @@ type SimpleChaincode struct {
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response  {
     logger.Info("########### ak_cc0 Init ###########")
-
-
     
     pkiJson := `{"PK": [
     {"X": 31162737974914322510223911493259949908325790533701417645370598536038546760813,"Y": 3243957534678192772627433866145815496382252068439063004526717165758982279478}, 
@@ -132,10 +120,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response  {
     {"X": 60284213037711622963860348272688379503451660376614053888286834031195565953917,"Y": 31555205998050805369326328704358754043154607628971344387956391519812942635882}, 
     {"X": 104597657332180700732862897786513766669655094268388302589461598923822453112374,"Y": 51659256023242095536989650590244254087257334458253939072448084726506084032326}]}` 
 
-
     var pki PKI 
     json.Unmarshal([]byte(pkiJson), &pki)
-
 
     // init 
      s256 := sha256.New()
@@ -166,17 +152,13 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response  {
     }
     ZKLedgerCurve.HPoints = generateH2tothe()
 
-
     // Put the zkcurve into the chain
-
     // convert ZKCurve to []byte
     ZKLedgerCurveAsJSONBytes, _ := json.Marshal(ZKLedgerCurve)
     // add bank to ledger, bank id as a key, bankAsJSONBytes as the value
     //logger.Info("b as byte = %d \n", bankAsJSONBytes)
     
-    
     ZKLedgerCurveKey := "ZKLedgerCurveKey"
-
     err = stub.PutState(ZKLedgerCurveKey, []byte(ZKLedgerCurveAsJSONBytes))
 
     if err != nil {
@@ -184,7 +166,6 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response  {
     }
 
     return shim.Success([]byte("Init - caches created successfully."))
-
 }
 
 // Transaction makes payment of X units from A to B
@@ -206,14 +187,11 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
         // add an entity from its state
         return t.addProofofAssets(stub, args)
     }
-    
      
-
     return shim.Success([]byte("Invoke successful."))
 
-
-     logger.Errorf("Unknown action, check the first argument, must be one of 'add', 'query'. But got: %v", args[0])
-     return shim.Error(fmt.Sprintf("Unknown action, check the first argument, must be one of 'add', or 'query'. But got: %v", args[0]))
+    logger.Errorf("Unknown action, check the first argument, must be one of 'add', 'query'. But got: %v", args[0])
+    return shim.Error(fmt.Sprintf("Unknown action, check the first argument, must be one of 'add', or 'query'. But got: %v", args[0]))
 }
 
 func (t *SimpleChaincode) addIssuance(stub shim.ChaincodeStubInterface, args []string) pb.Response {
@@ -226,10 +204,8 @@ func (t *SimpleChaincode) addIssuance(stub shim.ChaincodeStubInterface, args []s
     {"X": 60284213037711622963860348272688379503451660376614053888286834031195565953917,"Y": 31555205998050805369326328704358754043154607628971344387956391519812942635882}, 
     {"X": 104597657332180700732862897786513766669655094268388302589461598923822453112374,"Y": 51659256023242095536989650590244254087257334458253939072448084726506084032326}]}` 
 
-
     var pki PKI 
     json.Unmarshal([]byte(pkiJson), &pki)
-
     ZKLedgerCurveKey := "ZKLedgerCurveKey"
     var err error
     
@@ -297,8 +273,6 @@ func (t *SimpleChaincode) addIssuance(stub shim.ChaincodeStubInterface, args []s
             return shim.Error("Transaction does not verify!!!")
     }
     elapsed := time.Since(start)
-
-
     etxAsJSONBytes, _ := json.Marshal(etx)
 
     // Write the state back to the ledger
@@ -320,7 +294,6 @@ func (t *SimpleChaincode) addIssuance(stub shim.ChaincodeStubInterface, args []s
     gval := ZKLedgerCurve.Mult(ZKLedgerCurve.G, en.V)
     CommsCache[etx.Sender] = ZKLedgerCurve.Add(CommsCache[etx.Sender], gval)
 
-
     CacheListKey := "CacheList" + strconv.Itoa(etx.Index)
     CacheList = CacheListStruct{CommsCache: CommsCache, RTokenCache: RTokenCache}
     CacheListAsJSONBytes, _ := json.Marshal(CacheList)
@@ -339,8 +312,7 @@ func (t *SimpleChaincode) addIssuance(stub shim.ChaincodeStubInterface, args []s
 
 func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     //logger.Info("########### example_cc0 add ###########")
-
-    
+ 
     pkiJson := `{"PK": [
     {"X": 31162737974914322510223911493259949908325790533701417645370598536038546760813,"Y": 3243957534678192772627433866145815496382252068439063004526717165758982279478}, 
     {"X": 104306669726597258552457800704291913924157442819741684968539853652305339195302,"Y": 59723646933547178320805231501800256566404530244961528445232623018526217031402}, 
@@ -348,27 +320,17 @@ func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface, args []string) p
     {"X": 60284213037711622963860348272688379503451660376614053888286834031195565953917,"Y": 31555205998050805369326328704358754043154607628971344387956391519812942635882}, 
     {"X": 104597657332180700732862897786513766669655094268388302589461598923822453112374,"Y": 51659256023242095536989650590244254087257334458253939072448084726506084032326}]}` 
 
-
     var pki PKI 
     json.Unmarshal([]byte(pkiJson), &pki)
 
     ZKLedgerCurveKey := "ZKLedgerCurveKey"
     var err error
-    
-
+  
     // Check if the invoke request has exactly 1 arg
-    // should have 3 args for 4 banks
-
-    //1 arg for each bank now
-
-    //10 arg for each bank now
     if len(args) != 1 {
         return shim.Error("Incorrect number of arguments.")
     }
-
-   
     // move the zkledger curve up
-
     // Get the ZKLedgerCurve state from the ledger
     ZKLedgerCurveAsBytes, err := stub.GetState(ZKLedgerCurveKey)
     if err != nil {
@@ -380,8 +342,6 @@ func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface, args []string) p
     }
 
     //Construct the struct ZKLedgerCurve
-
-
     // init 
     s256 := sha256.New()
 
@@ -415,8 +375,6 @@ func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface, args []string) p
     _ = json.Unmarshal(ZKLedgerCurveAsBytes, &ZKLedgerCurve)
     //logger.Info("ZKLedgerCurve = %d\n", ZKLedgerCurve)
 
-
-
     var etx [1] EncryptedTransaction    
     for i := 0; i < 1; i++{
         //fmt.Println("Bank[",b.id,"] ", " postTransaction - etxID = ", etx[i].Index )
@@ -433,11 +391,6 @@ func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface, args []string) p
         json.Unmarshal([]byte(etxJson), &etx[i])
 
         etxKey := "etx" + strconv.Itoa(etx[i].Index)
-        //logger.Info("Transaction- %v received\n", etx[i].Index)
-
-
-        //Make sure the transcation doesnt already exists on the ledger
-
         etxAsBytes, err := stub.GetState(etxKey)
         if err != nil {
             jsonResp := "{\"Error\":\"Failed to get state for " + etxKey + "\"}"
@@ -446,21 +399,16 @@ func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface, args []string) p
             return shim.Error("Transcation" + etxKey + "already exists, you cannot create a transcation with the same ID")
         }
 
-
         //Verify the transcation
         // if the transcation does not verify, reject the transcation
         // if it verifies, write the transcations to the ledger
-
-
         start := time.Now()
          if !etx[i].Verify(pki.PK, fmt.Sprintf("%d", Id)) {
                 return shim.Error("Transaction does not verify!!!")
         }
         elapsed := time.Since(start)
-
         logger.Info("Transcation Verify took %s", elapsed)
        
-
         etxAsJSONBytes, _ := json.Marshal(etx[i])
 
         // Write the state back to the ledger
@@ -468,7 +416,6 @@ func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface, args []string) p
         if err != nil {
             return shim.Error("Failed to write transcation " + etxKey)
         }
-
 
         //update cache list
         CommsCacheJson := `[{"X": 0,"Y": 0},{"X": 0,"Y": 0},{"X": 0,"Y": 0},{"X": 0,"Y": 0}]`
@@ -501,7 +448,6 @@ func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface, args []string) p
 }
 
 
-
 // Query callback representing the query of a chaincode
 func (t *SimpleChaincode) query(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     //logger.Info("########### example_cc0 query ###########")
@@ -532,8 +478,6 @@ func (t *SimpleChaincode) query(stub shim.ChaincodeStubInterface, args []string)
 
     return shim.Success(etxAsBytes)
 }
-
-
 
 func (t *SimpleChaincode) addProofofAssets(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     //logger.Info("########### example_cc0 addProofofAssets ###########")
@@ -608,54 +552,38 @@ func (t *SimpleChaincode) addProofofAssets(stub shim.ChaincodeStubInterface, arg
     }
     ZKLedgerCurve.HPoints = generateH2tothe()
     
-    //ZKLedgerCurve := zksigma.ZKPCurveParams{}
     _ = json.Unmarshal(ZKLedgerCurveAsBytes, &ZKLedgerCurve)
-    //logger.Info("ZKLedgerCurve = %d\n", ZKLedgerCurve)
-
 
     var etxtmp EncryptedTransaction 
     //size = *numbanks - 1
-
     var etx [10] EncryptedTransaction
-
     j :=0
-
     for i :=0; i < 19; i = i+ 2{
-
         etxJson := args[i]
-
         if etxJson == "" {
             return shim.Error("etxJson not found")
         }
-
         json.Unmarshal([]byte(etxJson), &etx[j])
-
         etxKey := "etx" + strconv.Itoa(etx[j].Index)
-       
+    
         var CacheList CacheListStruct
-
         CacheListJson := args[i + 1]
-
         if CacheListJson == "" {
             return shim.Error("etxJson not found")
         }
-
         json.Unmarshal([]byte(CacheListJson), &CacheList)
 
         CacheListKey := "CacheList" + strconv.Itoa(etx[j].Index)
         CommCache :=  CacheList.CommsCache
         RTokenCache := CacheList.RTokenCache
 
-        
         startVerifyPoA := time.Now()
          if !etx[j].VerifyProofofAssets(pki.PK, CommCache, RTokenCache, fmt.Sprintf("%d", Id)) {
                 return shim.Error("Proof of Assets does not verify!!! etx " + etxKey)
         }
         elapsedVerifyPoA := time.Since(startVerifyPoA)
-
         logger.Info("PoA Verify took %s", elapsedVerifyPoA)
          
-    
         etxAsJSONBytes, _ := json.Marshal(etxtmp)
 
         // Write the state back to the ledger
@@ -688,7 +616,6 @@ func generateH2tothe() []zksigma.ECPoint {
     return Hslice
 }
 
-
 func (en *Entry) verify(pks []zksigma.ECPoint, eidx int, i int, debug string) bool {
 
     // Check consistency proofs
@@ -699,7 +626,6 @@ func (en *Entry) verify(pks []zksigma.ECPoint, eidx int, i int, debug string) bo
         return false
     }
   
-    
     return true
 }
 
@@ -707,19 +633,15 @@ func (e *EncryptedTransaction) VerifyProofofAssets(pks []zksigma.ECPoint, CommCa
 
     for i := 0; i < len(e.Entries); i++ {
         en := &e.Entries[i]
-
         if en.Bank != i {
             Dprintf(" [%v] ETX %v Failed verify mismatching bank %#v\n", debug, e.Index, en)
             return false
         }
-    
         if !en.verifyProofofAssets(pks, CommCache[i], RTokenCache[i], e.Index, i, debug) {
             return false
-        }
-        
+        }  
     }
     
-
     return true
 }
 
@@ -810,9 +732,7 @@ func (e *EncryptedTransaction) Verify(pks []zksigma.ECPoint, debug string) bool 
         return true
     }
 
-
     // Transfer
-    
     if (len(pks) - 1) != len(e.Entries) { // we subtract 1 from len(pks) because the last entry is the issuer's key
         fmt.Printf("Length pks: %v, length entries: %v\n", len(pks)-1, len(e.Entries))
         panic("invalid sizes")
@@ -821,20 +741,15 @@ func (e *EncryptedTransaction) Verify(pks []zksigma.ECPoint, debug string) bool 
     
     for i := 0; i < len(e.Entries); i++ {
         en := &e.Entries[i]
-
-
         commitmentSum = ZKLedgerCurve.Add(commitmentSum, en.Comm)
         if en.Bank != i {
             Dprintf(" [%v] ETX %v Failed verify mismatching bank %#v\n", debug, e.Index, en)
             return false
         }
-    
         if !en.verify(pks, e.Index, i, debug) {
             return false
-        }
-        
+        }  
     }
-    
     
     // to verify the zero sum commitments we add up all the values and make sure it adds to 0
     if commitmentSum.X.Cmp(new(big.Int).SetInt64(0)) != 0 && commitmentSum.Y.Cmp(new(big.Int).SetInt64(0)) != 0 {
